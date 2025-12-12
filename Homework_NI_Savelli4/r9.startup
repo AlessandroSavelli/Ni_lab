@@ -1,0 +1,11 @@
+/etc/init.d/networking restart
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# This starts the dhcp server at boot
+/etc/init.d/isc-dhcp-server start
+#pumto 3
+ip route add default via 145.97.4.97
+
+# NAT punto 4
+# Maschera il traffico in uscita verso r8
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
