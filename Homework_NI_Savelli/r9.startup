@@ -3,3 +3,5 @@ echo 1 > /proc/sys/net/ipv4/ip_forward
 
 # This starts the dhcp server at boot
 /etc/init.d/isc-dhcp-server start
+
+ip route add default via 145.97.4.97
