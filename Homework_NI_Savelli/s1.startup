@@ -1,1 +1,9 @@
 /etc/init.d/networking restart
+
+#punto 6
+
+useradd -m -s /bin/bash ubuntu
+# 2. psw temporanea per permettere la copia della chiave
+echo "ubuntu:password" | chpasswd
+
+/etc/init.d/ssh start

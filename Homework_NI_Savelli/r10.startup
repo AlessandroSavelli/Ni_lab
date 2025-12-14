@@ -1,4 +1,44 @@
 /etc/init.d/networking restart
-echo 1 > /proc/sys/net/ipv4/ip_forward
+
 
 ip route add default via 151.0.45.0
+
+# Ho fatto un riodrino totale delle istruzioni quando ce ne era necessita, specificamente
+#nel punto 12/13 ho riordinato tutte le regole in modo che le accept fossero prima delle drop, 
+#come dovrebe essere
+
+# --- ROUTING DI RITORNO (Punto 11) ---
+# Fondamentale per far funzionare la VPN
+ip route add 10.10.0.0/24 via 192.168.88.100
+
+#  NAT 
+
+# --- DNAT (Ingresso) ---
+# VPN (Punto 9)
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 7070 -j DNAT --to-destination 192.168.88.100
+# SSH (Punto 13)
+iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 22 -j DNAT --to-destination 192.168.88.100
+
+# --- SNAT (Uscita) ---
+# Masquerade (Punto 4)
+iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+
+#  FIREWALL (FORWARD) 
+# L'ordine qui è vitale
+
+# 1. Permetti traffico di connessioni già stabilite (risposte)
+iptables -A FORWARD -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# 2. Permetti traffico VPN INGRESSO (Punto 9)
+iptables -A FORWARD -p tcp -d 192.168.88.100 --dport 7070 -j ACCEPT
+
+# 3. Permetti traffico SSH INGRESSO (Punto 13)
+# [IMPORTANTE: Deve stare PRIMA del DROP]
+iptables -A FORWARD -p tcp -d 192.168.88.100 --dport 22 -j ACCEPT
+
+# 4. Permetti traffico LAN verso ESTERNO
+iptables -A FORWARD -s 192.168.88.0/24 -j ACCEPT
+
+# 5. BLOCCO FINALE (Punto 5)
+# Tutto ciò che è diretto alla LAN e non è stato accettato sopra, viene buttato.
+iptables -A FORWARD -d 192.168.88.0/24 -j DROP

@@ -1,1 +1,9 @@
 /etc/init.d/networking restart
+
+
+mkdir -p /dev/net
+mknod /dev/net/tun c 10 200
+chmod 600 /dev/net/tun
+
+# per i punti dopo l'11
+route add default gw 192.168.88.1
